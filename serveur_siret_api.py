@@ -22,6 +22,3 @@ def get_siren_info(siren):
         "code_naf": data.get("activite_principale"),
         "libelle_naf": data.get("libelle_activite_principale", "Non disponible")
     })
-
-if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=10000)
