@@ -1,22 +1,27 @@
-from flask import Flask, request, jsonify
+from flask import Flask, jsonify
 import requests
 
 app = Flask(__name__)
 
-@app.route('/siret', methods=['GET'])
-def get_siret_info():
-    siren = request.args.get('siren')
-    if not siren:
-        return jsonify({"error": "Le paramètre 'siren' est requis."}), 400
+@app.route("/")
+def home():
+    return jsonify({"message": "Bienvenue sur l'API SIRET/SIREN."})
 
+@app.route("/siren/<siren>")
+def get_siren_info(siren):
     url = f"https://entreprise.data.gouv.fr/api/sirene/v3/unites_legales/{siren}"
-    try:
-        response = requests.get(url)
-        response.raise_for_status()
-        data = response.json()
-        return jsonify(data)
-    except requests.exceptions.RequestException as e:
-        return jsonify({"error": str(e)}), 500
+    response = requests.get(url)
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=10000)
+    if response.status_code != 200:
+        return jsonify({"error": "Numéro SIREN introuvable ou erreur API."}), 404
+
+    data = response.json()["unite_legale"]
+    return jsonify({
+        "siren": data.get("siren"),
+        "nom_entreprise": data.get("denomination") or data.get("nom") or "Non disponible",
+        "code_naf": data.get("activite_principale"),
+        "libelle_naf": data.get("libelle_activite_principale", "Non disponible")
+    })
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=10000)
